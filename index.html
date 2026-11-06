@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>張保仔尋寶 · Cheung Po Tsai's Treasure Hunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+HK:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#B8E7F1; --green:#D0EBC8; --cream:#FDF9DE;
+    --ink:#161616; --orange:#F07F2A; --pink:#E8489A; --jp:#2E5BBA; --gold:#F6C33B;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:"Noto Sans HK","Noto Sans CJK HK",system-ui,sans-serif;background:var(--blue);color:var(--ink);overflow-x:hidden}
+  button{font-family:inherit;cursor:pointer}
+  .jp{color:var(--jp);font-weight:700}
+  .en{color:#444}
+  .wrap{max-width:1200px;margin:0 auto;padding:18px 22px 28px;min-height:100%;display:flex;flex-direction:column}
+
+  /* header */
+  header{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .title{flex:1;min-width:280px}
+  .title h1{font-size:clamp(28px,4vw,46px);font-weight:900;line-height:1.05}
+  .title h1 span{color:var(--orange)}
+  .title .sub{font-size:clamp(13px,1.5vw,17px)}
+  .btn{border:3px solid var(--ink);background:#fff;border-radius:14px;padding:8px 14px;font-weight:900;font-size:15px;box-shadow:4px 4px 0 var(--ink);transition:transform .08s}
+  .btn:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--ink)}
+  .btn.orange{background:var(--orange);color:#fff}
+  .btn.pink{background:var(--pink);color:#fff}
+  .btn small{font-weight:400;font-size:12px;display:block}
+
+  /* teams */
+  .teams{display:flex;gap:16px;margin:16px 0 14px}
+  .team{flex:1;display:flex;align-items:center;gap:12px;background:#fff;border:3px solid var(--ink);border-radius:18px;padding:10px 16px;box-shadow:5px 5px 0 var(--ink);transition:transform .2s, background .2s}
+  .team.active{background:#FFF1A8;transform:translateY(-4px)}
+  .team .emo{font-size:40px}
+  .team .name{font-weight:900;font-size:22px;line-height:1.1}
+  .team .name small{display:block;font-size:13px;font-weight:400;color:#444}
+  .team .score{margin-left:auto;font-size:34px;font-weight:900;display:flex;align-items:center;gap:6px}
+  .turn{font-size:13px;font-weight:900;background:var(--ink);color:#fff;border-radius:8px;padding:2px 8px;visibility:hidden}
+  .team.active .turn{visibility:visible}
+
+  /* board */
+  .board{display:grid;grid-template-columns:repeat(6,1fr);gap:14px;flex:1;align-content:start}
+  .chest{aspect-ratio:1/0.85;border:3px solid var(--ink);border-radius:18px;background:var(--cream);box-shadow:5px 5px 0 var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;position:relative;transition:transform .12s}
+  .chest:hover:not(:disabled){transform:translateY(-4px) rotate(-2deg)}
+  .chest .ic{font-size:clamp(34px,5vw,58px);line-height:1}
+  .chest .no{position:absolute;top:6px;left:10px;font-size:18px}
+  .chest:disabled{background:#e8e8e8;box-shadow:2px 2px 0 #999;border-color:#999;cursor:default}
+  .chest:disabled .ic{filter:grayscale(1);opacity:.45}
+  .chest .res{font-size:13px;font-weight:700;color:#666}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(10,30,40,.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:10}
+  .overlay.show{display:flex}
+  .card{background:#fff;border:4px solid var(--ink);border-radius:24px;box-shadow:12px 12px 0 var(--ink);width:min(820px,100%);max-height:96vh;overflow:auto;padding:26px 30px;position:relative;animation:pop .25s ease}
+  @keyframes pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
+  .qhead{display:flex;align-items:center;gap:10px;font-weight:900;font-size:15px}
+  .pill{background:var(--orange);color:#fff;border-radius:10px;padding:3px 10px}
+  .pill.blue{background:var(--jp)}
+  .prompt{text-align:center;margin:18px 0 6px}
+  .prompt .big{font-size:clamp(46px,8vw,86px);font-weight:900;line-height:1.1}
+  .prompt .emoji{font-size:clamp(52px,8vw,84px)}
+  .prompt .jpl{font-size:clamp(20px,3vw,30px)}
+  .speak{margin-top:8px}
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:18px}
+  .opt{border:3px solid var(--ink);background:var(--cream);border-radius:16px;padding:14px 16px;font-size:clamp(18px,2.4vw,24px);font-weight:900;text-align:left;box-shadow:4px 4px 0 var(--ink);display:flex;align-items:center;gap:12px;min-height:76px}
+  .opt .k{flex:none;width:36px;height:36px;border-radius:50%;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .opt .sm{display:block;font-size:14px}
+  .opt.right{background:#C9F2B8;border-color:#1E8A3A}
+  .opt.wrong{background:#FFC9C9;border-color:#C62828;opacity:.8}
+  .opt:disabled{cursor:default;color:var(--ink)}
+  .opt:disabled:not(.right):not(.wrong){opacity:.55}
+  .feedback{margin-top:18px;text-align:center;font-size:clamp(20px,3vw,28px);font-weight:900;min-height:40px}
+  .feedback .jp{font-size:.7em}
+  .actions{display:flex;justify-content:center;gap:12px;margin-top:14px}
+  .coins{font-size:42px;letter-spacing:4px;animation:pop .4s ease}
+
+  /* start / end */
+  .startcard h2{font-size:clamp(28px,4vw,40px);font-weight:900}
+  .rules{margin:14px 0;line-height:1.6;font-size:17px}
+  .rules li{margin-left:22px;margin-bottom:6px}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+  .seg button{border:3px solid var(--ink);background:#fff;padding:8px 14px;font-weight:900;font-size:15px;border-radius:12px;margin-right:6px}
+  .seg button.on{background:var(--ink);color:#fff}
+  .winner{text-align:center}
+  .winner .trophy{font-size:90px}
+  .confetti{position:fixed;top:-40px;font-size:28px;animation:fall linear forwards;pointer-events:none;z-index:20}
+  @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+  .muted{font-size:13px;color:#555}
+
+  @media (max-width:720px){
+    .board{grid-template-columns:repeat(4,1fr);gap:10px}
+    .opts{grid-template-columns:1fr}
+    .teams{flex-direction:column;gap:10px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>🏴‍☠️ 張保仔<span>尋寶</span>！</h1>
+      <div class="sub"><span class="jp">zoeng1 bou2 zai2 cam4 bou2!</span> <span class="en">· Cheung Po Tsai's Treasure Hunt</span></div>
+    </div>
+    <button class="btn" id="modeBtn" title="Change question type"></button>
+    <button class="btn" id="howBtn">❓ 玩法<small>How to play</small></button>
+    <button class="btn orange" id="newBtn">🔄 新遊戲<small>New game</small></button>
+  </header>
+
+  <div class="teams">
+    <div class="team" id="team0">
+      <div class="emo">🦜</div>
+      <div class="name">鸚鵡隊<small><span class="jp">jing1 mou5 deoi2</span> · Parrots</small></div>
+      <span class="turn">輪到你！ Your turn</span>
+      <div class="score">🪙 <span id="s0">0</span></div>
+    </div>
+    <div class="team" id="team1">
+      <div class="emo">🐢</div>
+      <div class="name">烏龜隊<small><span class="jp">wu1 gwai1 deoi2</span> · Tortoises</small></div>
+      <span class="turn">輪到你！ Your turn</span>
+      <div class="score">🪙 <span id="s1">0</span></div>
+    </div>
+  </div>
+
+  <div class="board" id="board"></div>
+  <p class="muted" style="margin-top:14px;text-align:center">揀一個寶箱！ <span class="jp">gaan2 jat1 go3 bou2 soeng1!</span> Pick a treasure chest!</p>
+</div>
+
+<!-- question modal -->
+<div class="overlay" id="qOverlay"><div class="card" id="qCard"></div></div>
+<!-- start / end modal -->
+<div class="overlay" id="sOverlay"><div class="card startcard" id="sCard"></div></div>
+
+<script>
+const WORDS = [
+  {zh:"碼頭", jp:"maa5 tau4", en:"pier", e:"⚓"},
+  {zh:"搭船", jp:"daap3 syun4", en:"take the ferry", e:"⛴️"},
+  {zh:"長洲", jp:"coeng4 zau1", en:"Cheung Chau", e:"🏝️"},
+  {zh:"大魚蛋", jp:"daai6 jyu4 daan2", en:"giant fishballs", e:"🍢"},
+  {zh:"芒果糯米糍", jp:"mong1 gwo2 no6 mai5 ci4", en:"mango mochi", e:"🥭"},
+  {zh:"凍西瓜", jp:"dung3 sai1 gwaa1", en:"frozen watermelon", e:"🍉"},
+  {zh:"好好食", jp:"hou2 hou2 sik6", en:"so yummy", e:"😋"},
+  {zh:"小長城", jp:"siu2 coeng4 sing4", en:"Mini Great Wall", e:"🧱"},
+  {zh:"奇石", jp:"kei4 sek6", en:"amazing rocks", e:"🪨"},
+  {zh:"骷髏頭", jp:"fu1 lou4 tau4", en:"skull", e:"💀"},
+  {zh:"鐘", jp:"zung1", en:"bell", e:"🔔"},
+  {zh:"烏龜", jp:"wu1 gwai1", en:"tortoise", e:"🐢"},
+  {zh:"踩三輪車", jp:"caai2 saam1 leon4 ce1", en:"ride a tricycle", e:"🚲"},
+  {zh:"朋友", jp:"pang4 jau5", en:"friends", e:"🧑‍🤝‍🧑"},
+  {zh:"屋企人", jp:"uk1 kei2 jan4", en:"family", e:"👨‍👩‍👧"},
+  {zh:"山洞", jp:"saan1 dung6", en:"cave", e:"🕳️"},
+  {zh:"海盜", jp:"hoi2 dou6", en:"pirate", e:"🏴‍☠️"},
+  {zh:"寶藏", jp:"bou2 zong6", en:"treasure", e:"💰"},
+];
+const TEAMS = [{zh:"鸚鵡隊",jp:"jing1 mou5 deoi2",en:"Parrots",e:"🦜"},{zh:"烏龜隊",jp:"wu1 gwai1 deoi2",en:"Tortoises",e:"🐢"}];
+const MODES = [
+  {id:"zh2en", label:"🀄→🔤 睇中文揀英文", sub:"Cantonese → English"},
+  {id:"en2zh", label:"🔤→🀄 睇英文揀中文", sub:"English → Cantonese"},
+  {id:"listen", label:"🔊 聽吓揀答案", sub:"Listen & choose"},
+];
+const N_CHESTS = 18;
+
+let state;
+let modeIdx = 0;
+
+const $ = id => document.getElementById(id);
+const shuffle = a => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+
+/* ---------- speech (Cantonese) ---------- */
+let yueVoice = null;
+function pickVoice(){
+  try{
+    const vs = speechSynthesis.getVoices();
+    yueVoice = vs.find(v=>/zh[-_]HK|yue/i.test(v.lang)) || vs.find(v=>/cantonese|粵|廣東/i.test(v.name)) || null;
+  }catch(e){ yueVoice=null; }
+}
+try{ pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }catch(e){}
+function say(text){
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "zh-HK"; if (yueVoice) u.voice = yueVoice; u.rate = 0.8;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+const canSpeak = () => { try{ return "speechSynthesis" in window; }catch(e){ return false; } };
+
+/* ---------- game setup ---------- */
+function rewards(){
+  // 18 chests: coins 1–3, two pirate traps, one big treasure
+  const r = [1,1,1,1,1,2,2,2,2,2,3,3,3,3,"pirate","pirate","gem","swap"];
+  return shuffle(r);
+}
+function newGame(){
+  const words = shuffle(WORDS).slice(0, N_CHESTS);
+  const rw = rewards();
+  state = {
+    scores:[0,0], turn:0,
+    chests: words.map((w,i)=>({word:w, reward:rw[i], opened:false, result:null})),
+  };
+  render();
+}
+function render(){
+  $("s0").textContent = state.scores[0];
+  $("s1").textContent = state.scores[1];
+  $("team0").classList.toggle("active", state.turn===0);
+  $("team1").classList.toggle("active", state.turn===1);
+  const m = MODES[modeIdx];
+  $("modeBtn").innerHTML = `${m.label}<small>${m.sub} · tap to change</small>`;
+  const b = $("board"); b.innerHTML = "";
+  state.chests.forEach((c,i)=>{
+    const el = document.createElement("button");
+    el.className = "chest";
+    el.disabled = c.opened;
+    el.innerHTML = `<span class="no">${i+1}</span><span class="ic">${c.opened ? c.word.e : "🧰"}</span>` +
+      (c.opened ? `<span class="res">${c.word.zh}</span>` : "");
+    el.onclick = () => openChest(i);
+    b.appendChild(el);
+  });
+}
+
+/* ---------- question ---------- */
+function openChest(i){
+  const c = state.chests[i];
+  const mode = MODES[modeIdx].id;
+  const others = shuffle(WORDS.filter(w=>w.zh!==c.word.zh)).slice(0,3);
+  const opts = shuffle([c.word, ...others]);
+  const t = TEAMS[state.turn];
+  let prompt;
+  if (mode==="zh2en"){
+    prompt = `<div class="big">${c.word.zh}</div><div class="jp jpl">${c.word.jp}</div>`;
+  } else if (mode==="en2zh"){
+    prompt = `<div class="emoji">${c.word.e}</div><div class="big" style="font-size:clamp(34px,6vw,60px)">${c.word.en}</div>`;
+  } else {
+    prompt = `<div class="emoji">👂</div><div class="en" style="font-size:20px">聽吓係咩字？ <span class="jp">teng1 haa5 hai6 me1 zi6?</span> Listen — which word is it?</div>`;
+  }
+  const speakBtn = canSpeak() ? `<button class="btn speak" id="spk">🔊 聽 <span class="jp" style="font-size:13px">teng1</span> · Listen</button>` : "";
+  const optHtml = opts.map((o,k)=>{
+    let label;
+    if (mode==="zh2en") label = `${o.e} ${o.en}`;
+    else label = `${o.zh}<span class="sm jp">${o.jp}</span>`;
+    return `<button class="opt" data-k="${k}"><span class="k">${"ABCD"[k]}</span><span>${label}</span></button>`;
+  }).join("");
+  $("qCard").innerHTML = `
+    <div class="qhead"><span class="pill">寶箱 ${i+1}</span><span class="pill blue">${t.e} ${t.zh} · ${t.en}</span></div>
+    <div class="prompt">${prompt}${speakBtn ? `<div>${speakBtn}</div>` : ""}</div>
+    <div class="opts">${optHtml}</div>
+    <div class="feedback" id="fb"></div>
+    <div class="actions" id="act"></div>`;
+  $("qOverlay").classList.add("show");
+  if (speakBtn) $("spk").onclick = () => say(c.word.zh);
+  if (mode==="listen" && speakBtn) setTimeout(()=>say(c.word.zh), 300);
+  document.querySelectorAll(".opt").forEach(btn=>{
+    btn.onclick = () => answer(i, opts[+btn.dataset.k], btn, opts);
+  });
+}
+
+function answer(i, picked, btn, opts){
+  const c = state.chests[i];
+  const right = picked.zh === c.word.zh;
+  document.querySelectorAll(".opt").forEach((b,k)=>{
+    b.disabled = true;
+    if (opts[k].zh === c.word.zh) b.classList.add("right");
+  });
+  if (!right) btn.classList.add("wrong");
+  c.opened = true;
+  const me = state.turn, other = 1 - me;
+  let fb = "";
+  if (right){
+    const r = c.reward;
+    if (typeof r === "number"){
+      state.scores[me] += r;
+      fb = `<div class="coins">${"🪙".repeat(r)}</div>啱晒！ <span class="jp">aam1 saai3!</span> Correct! +${r}`;
+    } else if (r==="gem"){
+      state.scores[me] += 5;
+      fb = `<div class="coins">💎</div>大寶藏！ <span class="jp">daai6 bou2 zong6!</span> Big treasure! +5`;
+    } else if (r==="pirate"){
+      state.scores[me] = Math.max(0, state.scores[me]-2);
+      fb = `<div class="coins">🏴‍☠️</div>啱晒！但係……海盜嚟咗！ <span class="jp">hoi2 dou6 lai4 zo2!</span><br><span style="font-size:.75em">Correct — but a pirate stole 2 coins! −2</span>`;
+    } else if (r==="swap"){
+      const s = state.scores; [s[0], s[1]] = [s[1], s[0]];
+      fb = `<div class="coins">🔄</div>啱晒！神秘寶箱：交換金幣！ <span class="jp">gaau1 wun6!</span><br><span style="font-size:.75em">Correct — magic chest: the teams swap coins!</span>`;
+    }
+    c.result = "right";
+    burst(10);
+  } else {
+    fb = `<div class="coins">😅</div>差少少！ <span class="jp">caa1 siu2 siu2!</span> Almost!<br><span style="font-size:.75em">${c.word.zh} <span class="jp">${c.word.jp}</span> = ${c.word.en}</span>`;
+    c.result = "wrong";
+  }
+  $("fb").innerHTML = fb;
+  const done = state.chests.every(x=>x.opened);
+  $("act").innerHTML = `<button class="btn" id="again">🔊 再聽 <small>Listen again</small></button>
+    <button class="btn orange" id="next">${done ? "🏆 睇結果 <small>See results</small>" : "➡️ 下一隊 <small>Next team</small>"}</button>`;
+  if (canSpeak()) { $("again").onclick = () => say(c.word.zh); say(c.word.zh); }
+  else $("again").remove();
+  $("next").onclick = () => {
+    $("qOverlay").classList.remove("show");
+    try{ speechSynthesis.cancel(); }catch(e){}
+    state.turn = other;
+    render();
+    if (done) showEnd();
+  };
+}
+
+/* ---------- start / end ---------- */
+function showHow(first){
+  $("sCard").innerHTML = `
+    <h2>🏴‍☠️ 點樣玩？ <span class="jp" style="font-size:.55em">dim2 joeng2 waan2?</span> <span class="en" style="font-size:.5em">How to play</span></h2>
+    <ol class="rules">
+      <li>分兩隊：🦜 鸚鵡隊 同 🐢 烏龜隊。<br><span class="en">Make two teams: Parrots and Tortoises.</span></li>
+      <li>輪流揀一個寶箱 🧰，大聲讀出個詞，再揀答案。<br><span class="en">Take turns to pick a chest. Read the word out loud, then choose the answer.</span></li>
+      <li>答啱有金幣 🪙！小心：有啲寶箱有海盜 🏴‍☠️、大寶藏 💎 同神秘交換 🔄！<br><span class="en">Correct answers win coins. Watch out for pirates, big treasure and the magic swap chest!</span></li>
+      <li>寶箱開晒，最多金幣嗰隊贏！<br><span class="en">When all chests are open, the team with the most coins wins!</span></li>
+    </ol>
+    <div class="row"><b>題目類型 Question type:</b>
+      <span class="seg" id="seg">${MODES.map((m,k)=>`<button data-k="${k}" class="${k===modeIdx?"on":""}">${m.label}</button>`).join("")}</span>
+    </div>
+    ${canSpeak() ? `<p class="muted">🔊 按「聽」會用電腦讀出廣東話。如果你部機冇廣東話聲，可能會用普通話讀，咁就由老師讀出嚟。<br>The 🔊 button uses your device's Cantonese voice; if your device has none, read the word aloud yourself.</p>` : ""}
+    <div class="actions"><button class="btn orange" id="go">${first ? "🚀 開始！ <small>Start</small>" : "👍 明白 <small>Got it</small>"}</button></div>`;
+  $("sOverlay").classList.add("show");
+  document.querySelectorAll("#seg button").forEach(b=>b.onclick=()=>{
+    modeIdx = +b.dataset.k;
+    document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on", x===b));
+    render();
+  });
+  $("go").onclick = () => { $("sOverlay").classList.remove("show"); };
+}
+function showEnd(){
+  const [a,b] = state.scores;
+  let html;
+  if (a===b){
+    html = `<div class="trophy">🤝</div><h2>打和！ <span class="jp" style="font-size:.6em">daa2 wo4!</span></h2><p class="en" style="font-size:20px">It's a tie! ${a} : ${b}</p>`;
+  } else {
+    const w = a>b ? 0 : 1;
+    html = `<div class="trophy">🏆</div><h2>${TEAMS[w].e} ${TEAMS[w].zh} 贏咗！</h2>
+      <p class="jp" style="font-size:20px">${TEAMS[w].jp} jeng4 zo2!</p>
+      <p class="en" style="font-size:20px">The ${TEAMS[w].en} found the treasure! ${Math.max(a,b)} : ${Math.min(a,b)}</p>`;
+  }
+  $("sCard").innerHTML = `<div class="winner">${html}
+    <p style="margin-top:12px;font-size:22px;font-weight:900">好叻呀！ <span class="jp">hou2 lek1 aa3!</span> <span class="en">Well done, everyone!</span></p>
+    <div class="actions"><button class="btn orange" id="replay">🔄 再玩一次 <small>Play again</small></button></div></div>`;
+  $("sOverlay").classList.add("show");
+  burst(60);
+  $("replay").onclick = () => { $("sOverlay").classList.remove("show"); newGame(); };
+}
+function burst(n){
+  const pool = ["🪙","💎","⭐","🎉","🪙"];
+  for (let i=0;i<n;i++){
+    const s = document.createElement("div");
+    s.className = "confetti";
+    s.textContent = pool[Math.floor(Math.random()*pool.length)];
+    s.style.left = Math.random()*100 + "vw";
+    s.style.animationDuration = (1.6 + Math.random()*1.8) + "s";
+    s.style.animationDelay = (Math.random()*0.4) + "s";
+    document.body.appendChild(s);
+    setTimeout(()=>s.remove(), 4200);
+  }
+}
+
+$("modeBtn").onclick = () => { modeIdx = (modeIdx+1) % MODES.length; render(); };
+$("howBtn").onclick = () => showHow(false);
+$("newBtn").onclick = () => newGame();
+
+newGame();
+showHow(true);
+</script>
+</body>
+</html>
